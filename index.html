@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Meine POIs</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#006644">
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    input, select, textarea { display: block; width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { padding: 10px; margin-top: 5px; background: #006644; color: white; border: none; cursor: pointer; }
+    .poi { background: white; padding: 15px; margin: 10px 0; border-radius: 6px; }
+    .poi button { background: #007bff; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>📍 Meine POIs</h1>
+
+  <h2>➕ Neuer POI</h2>
+  <input id="name" placeholder="Name des POIs">
+  <input id="lat" placeholder="Breitengrad (z. B. 48.137154)">
+  <input id="lng" placeholder="Längengrad (z. B. 11.576124)">
+  <select id="category">
+    <option value="">-- Kategorie wählen --</option>
+    <option value="Privat">Privat</option>
+    <option value="Arbeit">Arbeit</option>
+    <option value="Tanken">Tanken</option>
+    <option value="Freizeit">Freizeit</option>
+  </select>
+  <button onclick="addPOI()">POI speichern</button>
+
+  <h2>📋 Gespeicherte POIs</h2>
+  <div id="poiList"></div>
+
+  <script>
+    let pois = JSON.parse(localStorage.getItem('pois') || '[]');
+
+    function savePOIs() {
+      localStorage.setItem('pois', JSON.stringify(pois));
+    }
+
+    function addPOI() {
+      const name = document.getElementById('name').value;
+      const lat = document.getElementById('lat').value;
+      const lng = document.getElementById('lng').value;
+      const category = document.getElementById('category').value;
+
+      if (!name || !lat || !lng || !category) {
+        alert("Bitte alle Felder ausfüllen.");
+        return;
+      }
+
+      pois.push({ name, lat, lng, category });
+      savePOIs();
+      renderPOIs();
+
+      document.getElementById('name').value = '';
+      document.getElementById('lat').value = '';
+      document.getElementById('lng').value = '';
+      document.getElementById('category').value = '';
+    }
+
+    function renderPOIs() {
+      const list = document.getElementById('poiList');
+      list.innerHTML = '';
+      pois.forEach((poi, index) => {
+        const div = document.createElement('div');
+        div.className = 'poi';
+        div.innerHTML = `
+          <strong>${poi.name}</strong><br>
+          Kategorie: ${poi.category}<br>
+          Koordinaten: ${poi.lat}, ${poi.lng}<br>
+          <button onclick="navigate(${poi.lat}, ${poi.lng})">📍 Navigation starten</button>
+          <button style="background:red;" onclick="deletePOI(${index})">🗑️ Löschen</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function navigate(lat, lng) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+    }
+
+    function deletePOI(index) {
+      if (confirm("POI wirklich löschen?")) {
+        pois.splice(index, 1);
+        savePOIs();
+        renderPOIs();
+      }
+    }
+
+    renderPOIs();
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker registriert.'));
+    }
+  </script>
+
+</body>
+</html>
